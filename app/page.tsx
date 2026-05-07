@@ -61,7 +61,7 @@ export default async function Home() {
             Melalui website ini, informasi publik disajikan lebih terbuka dan mudah diakses.
           </p>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
             <article className="rounded-2xl border border-[var(--line)] bg-white p-5">
               <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Sejarah Singkat</h3>
               <p className="mt-2 text-sm text-[var(--muted)]">Bertumbuh dari komunitas agraris yang kuat, Mertelu berkembang menjadi padukuhan yang adaptif dan aktif dalam kegiatan sosial.</p>
@@ -74,6 +74,23 @@ export default async function Home() {
               <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Misi</h3>
               <p className="mt-2 text-sm text-[var(--muted)]">Menguatkan UMKM lokal, meningkatkan kualitas lingkungan, dan mendorong kolaborasi antarwarga di setiap program padukuhan.</p>
             </article>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-[var(--line)] bg-white overflow-hidden p-5 lg:p-6">
+            <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Dokumentasi Padukuhan</h3>
+            <p className="mt-1 text-sm text-[var(--muted)]">Lihat profil dan keindahan Padukuhan Mertelu dalam video berikut.</p>
+            <div className="mt-4 aspect-video w-full overflow-hidden rounded-xl bg-black">
+              <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube.com/embed/FAAQ8APLvng"
+                title="Padukuhan Mertelu"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="w-full h-full"
+              />
+            </div>
           </div>
         </section>
 

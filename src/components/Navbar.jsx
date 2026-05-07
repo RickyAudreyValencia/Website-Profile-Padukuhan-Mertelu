@@ -21,8 +21,12 @@ export default function Navbar() {
       <div className="mx-auto mt-4 max-w-6xl rounded-2xl border border-[var(--line)] bg-white/90 px-4 py-3 shadow-[0_10px_24px_rgba(22,36,28,0.1)] backdrop-blur">
         <div className="flex items-center justify-between gap-3">
           <a href="#" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-sm font-bold text-white">PM</div>
-          <div>
+            <img 
+              src="/mertelu.png" 
+              alt="Padukuhan Mertelu Logo"
+              className="h-10 w-10 object-contain"
+            />
+            <div>
               <div className="text-[0.95rem] font-semibold leading-none text-[var(--brand)]">Padukuhan Mertelu</div>
               <div className="mt-1 text-xs text-[var(--muted)]">Profil Digital Masyarakat</div>
             </div>

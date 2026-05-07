@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Website Desa (Next.js + Tailwind + Supabase)
 
-## Getting Started
+Proyek ini adalah template website profil desa modern menggunakan Next.js App Router, Tailwind CSS, dan Supabase sebagai backend.
 
-First, run the development server:
+## Quick start
+
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Tambahkan environment variables
+
+- Salin `.env.local.example` menjadi `.env.local`
+- Isi `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` dari dashboard Supabase (Project -> Settings -> API)
+
+3. Jalankan dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Buka `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Pastikan Anda sudah membuat project di Supabase dan membuat 3 tabel berikut di schema `public`:
 
-## Learn More
+- `berita` (columns: `id` serial PK, `title` text, `content` text, `image` text, `created_at` timestamp)
+- `kegiatan` (columns: `id`, `judul`, `deskripsi`, `gambar`, `created_at`)
+- `galeri` (columns: `id`, `judul`, `gambar`, `created_at`)
 
-To learn more about Next.js, take a look at the following resources:
+Contoh SQL (sesuaikan tipe dan pengaturan):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```sql
+create table berita (
+	id bigserial primary key,
+	title text,
+	content text,
+	image text,
+	created_at timestamp with time zone default now()
+);
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+create table kegiatan (
+	id bigserial primary key,
+	judul text,
+	deskripsi text,
+	gambar text,
+	created_at timestamp with time zone default now()
+);
 
-## Deploy on Vercel
+create table galeri (
+	id bigserial primary key,
+	judul text,
+	gambar text,
+	created_at timestamp with time zone default now()
+);
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Menambahkan data awal
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Anda bisa menambahkan data lewat Supabase UI (Table Editor) atau impor CSV.
+
+Jika tabel kosong, UI akan menampilkan contoh gambar Unsplash.
+
+## Admin / Login
+
+- Untuk fitur admin (ubah data dari situs), gunakan Supabase Auth + RLS. Saat ini proyek ini hanya menampilkan data read-only dari Supabase.
+- Anda dapat menggunakan Supabase Dashboard -> Authentication untuk mengaktifkan sign-up dan menambahkan user admin.
+- Jangan simpan `service_role` key di repository publik.
+
+## File penting
+
+- `src/lib/supabase.js` - wrapper Supabase client
+- `src/app/layout.js` - root layout
+- `src/app/page.js` - halaman utama (fetch server-side dari Supabase)
+- `src/components/*` - komponen UI (Navbar, Hero, Berita, Kegiatan, Galeri, Footer, dll.)
+
+## Notes
+
+- Tailwind config sudah diset (lihat `postcss.config.mjs` dan `tailwind.config`) — sesuaikan jika perlu.
+- Jika ada error terkait env vars, periksa bahwa `.env.local` berisi nilai yang benar dan restart dev server.
+
+Jika mau, saya bisa:
+- Menambahkan SQL seed file untuk mengisi contoh data,
+- Menambahkan halaman admin sederhana yang menggunakan Supabase Auth,
+- Menambahkan deploy guide (Vercel) dan setting env di deployment.
+
+Mau saya tambahkan salah satu dari opsi di atas sekarang?

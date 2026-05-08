@@ -20,19 +20,22 @@ async function fetchTable(table: string) {
 async function fetchStats() {
   try {
     const { data, error } = await supabase.from("statistik").select("*").single();
+    
     if (error && error.code !== "PGRST116") {
       console.error("Supabase error (statistik):", error);
       return { penduduk: 0, dusun: 0, umkm: 0, rtrw: 0 };
     }
+    
     // Map database fields to app fields
     if (data) {
       return {
-        penduduk: data.jumlah_penduduk || 0,
-        dusun: data.jumlah_dusun || 0,
-        umkm: data.jumlah_umkm || 0,
-        rtrw: data.jumlah_rt_rw || 0,
+        penduduk: parseInt(data.jumlah_penduduk) || 0,
+        dusun: parseInt(data.jumlah_dusun) || 0,
+        umkm: parseInt(data.jumlah_umkm) || 0,
+        rtrw: parseInt(data.jumlah_rt_rw) || 0,
       };
     }
+    
     return { penduduk: 0, dusun: 0, umkm: 0, rtrw: 0 };
   } catch (error) {
     console.error("Fetch error (statistik):", error);

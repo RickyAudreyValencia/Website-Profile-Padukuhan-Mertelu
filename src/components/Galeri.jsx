@@ -13,14 +13,14 @@ export default function Galeri({ items }) {
           <button
             key={g.id}
             onClick={() => setSelected(g)}
-            className="group relative overflow-hidden rounded-2xl border border-[var(--line)] shadow-[0_8px_22px_rgba(24,35,28,0.09)]"
+            className="group relative overflow-hidden rounded-2xl border border-[var(--line)] shadow-[0_8px_22px_rgba(24,35,28,0.09)] transition-all duration-350 hover:shadow-[0_20px_40px_rgba(31,77,61,0.15)]"
           >
             <img
               src={g.gambar || g.image || 'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=900&q=80'}
               alt={g.judul}
-              className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="h-40 w-full object-cover image-hover-scale"
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 py-2 text-left text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 py-2 text-left text-xs font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               {g.judul || 'Dokumentasi Kegiatan'}
             </div>
           </button>

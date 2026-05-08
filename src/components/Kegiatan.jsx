@@ -5,12 +5,12 @@ export default function Kegiatan({ items }) {
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
       {items.map((k) => (
-        <div key={k.id} className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_8px_22px_rgba(24,35,28,0.09)] transition-transform duration-300 hover:-translate-y-1">
+        <div key={k.id} className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_8px_22px_rgba(24,35,28,0.09)] card-hover-glow">
           <div className="h-48 w-full overflow-hidden">
             <img
               src={k.gambar || k.image || 'https://images.unsplash.com/photo-1522791731139-3f4f7f4f9f3a?auto=format&fit=crop&w=900&q=80'}
               alt={k.judul}
-              className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+              className="h-full w-full object-cover image-hover-scale"
             />
           </div>
           <div className="p-4">

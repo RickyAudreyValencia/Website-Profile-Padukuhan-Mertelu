@@ -10,12 +10,12 @@ export default function Berita({ items }) {
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
       {items.map((b) => (
-        <article key={b.id} className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_8px_22px_rgba(24,35,28,0.09)] transition-transform duration-300 hover:-translate-y-1">
+        <article key={b.id} className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_8px_22px_rgba(24,35,28,0.09)] card-hover-glow">
           <div className="h-44 w-full overflow-hidden">
             <img
               src={b.gambar || b.image || 'https://images.unsplash.com/photo-1557800636-894a64c1696f?auto=format&fit=crop&w=900&q=80'}
               alt={b.title || b.judul}
-              className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+              className="h-full w-full object-cover image-hover-scale"
             />
           </div>
           <div className="p-4">

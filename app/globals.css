@@ -64,6 +64,30 @@ a {
   animation: fadeUp 0.6s ease both;
 }
 
+.fade-up:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.fade-up:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.fade-up:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.fade-up:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+.fade-up:nth-child(6) {
+  animation-delay: 0.5s;
+}
+
+.fade-up:nth-child(n+7) {
+  animation-delay: 0.6s;
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -74,6 +98,123 @@ a {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Animated Counter */
+@keyframes countUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.counter-value {
+  animation: countUp 0.5s ease-out;
+}
+
+/* Enhanced Card Hover Effects with Glow */
+.card-hover-glow {
+  position: relative;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.card-hover-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(199, 140, 58, 0.4), rgba(46, 107, 84, 0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.card-hover-glow:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px rgba(31, 77, 61, 0.15);
+}
+
+.card-hover-glow:hover::before {
+  opacity: 1;
+}
+
+/* Stat Card Glow */
+.stat-card {
+  position: relative;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-soft) 100%);
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 50%, rgba(199, 140, 58, 0.2), transparent 50%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px rgba(31, 77, 61, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.stat-card:hover::after {
+  opacity: 1;
+}
+
+/* Glassmorphism overlay on hover */
+.glass-on-hover {
+  backdrop-filter: blur(0px);
+  transition: backdrop-filter 0.35s ease;
+}
+
+.glass-on-hover:hover {
+  backdrop-filter: blur(4px);
+}
+
+/* Smooth scale on image hover */
+.image-hover-scale {
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Scroll reveal animation */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.6s ease both;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.6s ease both;
 }
 
 @media (max-width: 768px) {

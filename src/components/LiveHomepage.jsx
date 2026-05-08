@@ -17,9 +17,27 @@ async function fetchTable(table) {
   return data || [];
 }
 
-async function fetchCount(table) {
-  const { count } = await supabaseBrowser.from(table).select("id", { count: "exact", head: true });
-  return count || 0;
+async function fetchStats() {
+  try {
+    const { data, error } = await supabaseBrowser.from("statistik").select("*").single();
+    
+    if (error && error.code !== "PGRST116") throw error;
+    
+    // Map database fields to app fields
+    if (data) {
+      return {
+        penduduk: parseInt(data.jumlah_penduduk) || 0,
+        dusun: parseInt(data.jumlah_dusun) || 0,
+        umkm: parseInt(data.jumlah_umkm) || 0,
+        rtrw: parseInt(data.jumlah_rt_rw) || 0,
+      };
+    }
+    
+    return { penduduk: 0, dusun: 0, umkm: 0, rtrw: 0 };
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    return { penduduk: 0, dusun: 0, umkm: 0, rtrw: 0 };
+  }
 }
 
 export default function LiveHomepage({ initialBerita, initialKegiatan, initialGaleri, initialStats }) {
@@ -30,21 +48,18 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
   const [errorState, setErrorState] = useState({ berita: false, kegiatan: false, galeri: false });
 
   async function fetchHomepageData() {
-    const [nextBerita, nextKegiatan, nextGaleri, penduduk, dusun, umkm, rtrw] = await Promise.all([
+    const [nextBerita, nextKegiatan, nextGaleri, nextStats] = await Promise.all([
       fetchTable("berita"),
       fetchTable("kegiatan"),
       fetchTable("galeri"),
-      fetchCount("penduduk"),
-      fetchCount("dusun"),
-      fetchCount("umkm"),
-      fetchCount("rtrw"),
+      fetchStats(),
     ]);
 
     return {
       berita: nextBerita,
       kegiatan: nextKegiatan,
       galeri: nextGaleri,
-      stats: { penduduk, dusun, umkm, rtrw },
+      stats: nextStats,
     };
   }
 
@@ -82,20 +97,12 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
       .on("postgres_changes", { event: "*", schema: "public", table: "berita" }, handleRealtimeReload)
       .on("postgres_changes", { event: "*", schema: "public", table: "kegiatan" }, handleRealtimeReload)
       .on("postgres_changes", { event: "*", schema: "public", table: "galeri" }, handleRealtimeReload)
-      .subscribe();
-
-    const statsChannel = supabaseBrowser
-      .channel("public-stats-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "penduduk" }, handleRealtimeReload)
-      .on("postgres_changes", { event: "*", schema: "public", table: "dusun" }, handleRealtimeReload)
-      .on("postgres_changes", { event: "*", schema: "public", table: "umkm" }, handleRealtimeReload)
-      .on("postgres_changes", { event: "*", schema: "public", table: "rtrw" }, handleRealtimeReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "statistik" }, handleRealtimeReload)
       .subscribe();
 
     return () => {
       mounted = false;
       supabaseBrowser.removeChannel(contentChannel);
-      supabaseBrowser.removeChannel(statsChannel);
     };
   }, []);
 
@@ -103,7 +110,7 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
     <>
       <Stats stats={stats} />
 
-      <section id="berita" className="section-wrap fade-up mt-8 p-6 md:p-8">
+      <section id="berita" className="section-wrap fade-up mt-8 p-6 md:p-8" style={{ animationDelay: '0.1s' }}>
         <p className="section-kicker">Informasi</p>
         <h2 className="section-title mt-2 mb-6 text-2xl md:text-3xl">Berita Terbaru</h2>
         {errorState.berita ? (
@@ -115,7 +122,7 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
         )}
       </section>
 
-      <section id="kegiatan" className="section-wrap fade-up mt-8 p-6 md:p-8">
+      <section id="kegiatan" className="section-wrap fade-up mt-8 p-6 md:p-8" style={{ animationDelay: '0.2s' }}>
         <p className="section-kicker">Aktivitas</p>
         <h2 className="section-title mt-2 mb-6 text-2xl md:text-3xl">Kegiatan Padukuhan</h2>
         {errorState.kegiatan ? (
@@ -127,7 +134,7 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
         )}
       </section>
 
-      <section id="galeri" className="section-wrap fade-up mt-8 p-6 md:p-8">
+      <section id="galeri" className="section-wrap fade-up mt-8 p-6 md:p-8" style={{ animationDelay: '0.3s' }}>
         <p className="section-kicker">Dokumentasi</p>
         <h2 className="section-title mt-2 mb-6 text-2xl md:text-3xl">Galeri Kegiatan</h2>
         {errorState.galeri ? (

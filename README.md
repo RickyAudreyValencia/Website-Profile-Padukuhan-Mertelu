@@ -77,14 +77,4 @@ Jika tabel kosong, UI akan menampilkan contoh gambar Unsplash.
 - `src/app/page.js` - halaman utama (fetch server-side dari Supabase)
 - `src/components/*` - komponen UI (Navbar, Hero, Berita, Kegiatan, Galeri, Footer, dll.)
 
-## Notes
 
-- Tailwind config sudah diset (lihat `postcss.config.mjs` dan `tailwind.config`) — sesuaikan jika perlu.
-- Jika ada error terkait env vars, periksa bahwa `.env.local` berisi nilai yang benar dan restart dev server.
-
-Jika mau, saya bisa:
-- Menambahkan SQL seed file untuk mengisi contoh data,
-- Menambahkan halaman admin sederhana yang menggunakan Supabase Auth,
-- Menambahkan deploy guide (Vercel) dan setting env di deployment.
-
-Mau saya tambahkan salah satu dari opsi di atas sekarang?

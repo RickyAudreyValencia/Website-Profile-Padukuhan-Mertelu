@@ -1,32 +1,56 @@
 "use client";
-// Berita component (client) - displays a responsive grid of news cards
 
-function truncate(text, n = 140) {
-  if (!text) return '';
-  return text.length > n ? text.slice(0, n) + '…' : text;
+import { CalendarDays } from "lucide-react";
+
+function truncate(text, n = 150) {
+  if (!text) return "";
+  return text.length > n ? `${text.slice(0, n).trim()}...` : text;
+}
+
+function formatDate(value) {
+  if (!value) return "-";
+  return new Date(value).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
 }
 
 export default function Berita({ items }) {
+  const [featured, ...rest] = items;
+  const fallback = "https://img.youtube.com/vi/FAAQ8APLvng/maxresdefault.jpg";
+
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-      {items.map((b) => (
-        <article key={b.id} className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_8px_22px_rgba(24,35,28,0.09)] card-hover-glow">
-          <div className="h-44 w-full overflow-hidden">
-            <img
-              src={b.gambar || b.image || 'https://images.unsplash.com/photo-1557800636-894a64c1696f?auto=format&fit=crop&w=900&q=80'}
-              alt={b.title || b.judul}
-              className="h-full w-full object-cover image-hover-scale"
-            />
+    <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      {featured && (
+        <article className="overflow-hidden rounded-lg border border-[var(--line)] bg-white shadow-[0_14px_34px_rgba(24,35,28,0.08)]">
+          <div className="aspect-[16/10] w-full overflow-hidden bg-[var(--surface-soft)]">
+            <img src={featured.gambar || featured.image || fallback} alt={featured.judul || featured.title} className="h-full w-full object-cover" />
           </div>
-          <div className="p-4">
-            <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">{b.judul || b.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{truncate(b.isi || b.deskripsi)}</p>
-            <div className="mt-4 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">
-              {new Date(b.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+          <div className="p-4 md:p-5">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-lg bg-[var(--surface-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--brand)]">
+              <CalendarDays size={14} />
+              {formatDate(featured.created_at)}
             </div>
+            <h3 className="font-[Sora] text-xl font-semibold leading-snug text-[var(--foreground)] md:text-2xl">{featured.judul || featured.title}</h3>
+            <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{truncate(featured.isi || featured.deskripsi, 220)}</p>
           </div>
         </article>
-      ))}
+      )}
+
+      <div className="grid gap-3">
+        {(rest.length ? rest : items.slice(1)).slice(0, 4).map((b) => (
+          <article key={b.id} className="grid grid-cols-[92px_1fr] gap-3 rounded-lg border border-[var(--line)] bg-white p-3 transition hover:border-[var(--brand)]/30 hover:bg-[var(--surface-soft)] sm:grid-cols-[124px_1fr]">
+            <div className="h-24 overflow-hidden rounded-md bg-[var(--surface-soft)] sm:h-28">
+              <img src={b.gambar || b.image || fallback} alt={b.title || b.judul} className="h-full w-full object-cover" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="line-clamp-2 font-[Sora] text-sm font-semibold leading-snug text-[var(--foreground)] sm:text-base">{b.judul || b.title}</h3>
+              <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--muted)] sm:text-sm">{truncate(b.isi || b.deskripsi, 100)}</p>
+              <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[var(--accent)]">
+                <CalendarDays size={13} />
+                {formatDate(b.created_at)}
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

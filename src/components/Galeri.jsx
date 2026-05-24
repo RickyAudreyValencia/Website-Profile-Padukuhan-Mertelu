@@ -1,35 +1,32 @@
 "use client";
-// Galeri component (client) - responsive image grid with preview modal
-import { useState } from 'react';
-import Modal from './Modal';
+
+import { useState } from "react";
+import Modal from "./Modal";
 
 export default function Galeri({ items }) {
   const [selected, setSelected] = useState(null);
+  const fallback = "https://img.youtube.com/vi/FAAQ8APLvng/maxresdefault.jpg";
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {items.map((g) => (
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {items.slice(0, 8).map((g, index) => (
           <button
             key={g.id}
             onClick={() => setSelected(g)}
-            className="group relative overflow-hidden rounded-2xl border border-[var(--line)] shadow-[0_8px_22px_rgba(24,35,28,0.09)] transition-all duration-350 hover:shadow-[0_20px_40px_rgba(31,77,61,0.15)]"
+            className={`group relative min-h-44 overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface-soft)] text-left shadow-[0_10px_26px_rgba(24,35,28,0.08)] transition hover:border-[var(--brand)]/35 ${
+              index === 0 ? "sm:col-span-2 sm:row-span-2 sm:min-h-80" : ""
+            }`}
           >
-            <img
-              src={g.gambar || g.image || 'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=900&q=80'}
-              alt={g.judul}
-              className="h-40 w-full object-cover image-hover-scale"
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 py-2 text-left text-xs font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              {g.judul || 'Dokumentasi Kegiatan'}
+            <img src={g.gambar || g.image || fallback} alt={g.judul} className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/76 via-black/28 to-transparent p-3 text-white">
+              <p className="line-clamp-2 text-sm font-semibold">{g.judul || "Dokumentasi Kegiatan"}</p>
             </div>
           </button>
         ))}
       </div>
 
-      {selected && (
-        <Modal src={selected.gambar || selected.image} alt={selected.judul} onClose={() => setSelected(null)} />
-      )}
+      {selected && <Modal src={selected.gambar || selected.image || fallback} alt={selected.judul} onClose={() => setSelected(null)} />}
     </>
   );
 }

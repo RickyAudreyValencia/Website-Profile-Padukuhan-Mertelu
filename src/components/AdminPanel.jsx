@@ -1,6 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  BarChart3,
+  CalendarDays,
+  CheckCircle2,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  LogOut,
+  Pencil,
+  Plus,
+  Save,
+  Settings2,
+  Trash2,
+  UploadCloud,
+  Users,
+  X,
+} from "lucide-react";
 import { supabaseBrowser } from "../lib/supabase-browser";
 import { useAuth } from "../context/AuthContext";
 import { useToast, ToastContainer } from "./Toast";
@@ -13,18 +31,21 @@ const CONTENT_CONFIG = {
     titleField: "judul",
     descriptionField: "isi",
     imageField: "gambar",
+    icon: FileText,
   },
   kegiatan: {
     label: "Kegiatan",
     titleField: "judul",
     descriptionField: "deskripsi",
     imageField: "gambar",
+    icon: CalendarDays,
   },
   galeri: {
     label: "Galeri",
     titleField: "judul",
     descriptionField: null,
     imageField: "gambar",
+    icon: ImageIcon,
   },
 };
 
@@ -47,7 +68,7 @@ async function fetchRows(table) {
 async function fetchStats() {
   const { data, error } = await supabaseBrowser.from("statistik").select("*").single();
   if (error && error.code !== "PGRST116") throw error;
-  // Map database fields to app fields
+
   if (data) {
     return {
       id: data.id,
@@ -58,6 +79,7 @@ async function fetchStats() {
       created_at: data.created_at,
     };
   }
+
   return { penduduk: 0, dusun: 0, umkm: 0, rtrw: 0 };
 }
 
@@ -78,6 +100,26 @@ async function fetchDashboardData() {
     },
     stats,
   };
+}
+
+function formatDate(value) {
+  if (!value) return "-";
+  return new Date(value).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function AdminIconButton({ children, className = "", ...props }) {
+  return (
+    <button
+      {...props}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--line)] bg-white text-[var(--muted)] transition hover:border-[var(--brand)]/30 hover:bg-[var(--surface-soft)] hover:text-[var(--brand)] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+    >
+      {children}
+    </button>
+  );
 }
 
 export default function AdminPanel() {
@@ -105,10 +147,22 @@ export default function AdminPanel() {
   const [selectedItem, setSelectedItem] = useState(null);
 
   const currentConfig = CONTENT_CONFIG[activeType];
+  const CurrentIcon = currentConfig.icon;
 
-  const activeItems = useMemo(() => {
-    return lists[activeType] || [];
-  }, [activeType, lists]);
+  const activeItems = useMemo(() => lists[activeType] || [], [activeType, lists]);
+
+  const statCards = [
+    { label: "Berita", value: counts.berita, icon: FileText },
+    { label: "Kegiatan", value: counts.kegiatan, icon: CalendarDays },
+    { label: "Galeri", value: counts.galeri, icon: ImageIcon },
+  ];
+
+  const villageStats = [
+    { key: "penduduk", label: "Jumlah Penduduk", icon: Users },
+    { key: "dusun", label: "Jumlah Dusun", icon: BarChart3 },
+    { key: "umkm", label: "Jumlah UMKM", icon: Activity },
+    { key: "rtrw", label: "Jumlah RT/RW", icon: Settings2 },
+  ];
 
   async function reloadDashboard() {
     try {
@@ -176,6 +230,15 @@ export default function AdminPanel() {
     showToast("Logout berhasil", "success");
   }
 
+  function resetForm() {
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setFile(null);
+    setImagePreview(null);
+    setSelectedDate("");
+  }
+
   function handleImageChange(event) {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -219,15 +282,34 @@ export default function AdminPanel() {
     setDescription(currentConfig.descriptionField ? item[currentConfig.descriptionField] || "" : "");
     setFile(null);
     setImagePreview(null);
-    // Format tanggal ke format YYYY-MM-DD untuk input date
+
     if (item.created_at) {
-      const date = new Date(item.created_at);
-      const formattedDate = date.toISOString().split('T')[0];
-      setSelectedDate(formattedDate);
+      setSelectedDate(new Date(item.created_at).toISOString().split("T")[0]);
     } else {
       setSelectedDate("");
     }
+
     setShowEditModal(true);
+  }
+
+  function getPayload(imageUrl) {
+    const payload = {
+      [currentConfig.titleField]: title.trim(),
+    };
+
+    if (currentConfig.descriptionField) {
+      payload[currentConfig.descriptionField] = description.trim();
+    }
+
+    if (imageUrl) {
+      payload[currentConfig.imageField] = imageUrl;
+    }
+
+    if (selectedDate) {
+      payload.created_at = new Date(`${selectedDate}T00:00:00`).toISOString();
+    }
+
+    return payload;
   }
 
   async function confirmEditSubmit(event) {
@@ -245,42 +327,18 @@ export default function AdminPanel() {
 
       if (file) {
         imageUrl = await uploadImageIfAny();
-        if (editingItem && editingItem[currentConfig.imageField]) {
+        if (editingItem?.[currentConfig.imageField]) {
           await deleteOldImage(editingItem[currentConfig.imageField]);
         }
       }
 
-      const payload = {
-        [currentConfig.titleField]: title.trim(),
-      };
-
-      if (currentConfig.descriptionField) {
-        payload[currentConfig.descriptionField] = description.trim();
-      }
-
-      if (imageUrl) {
-        payload[currentConfig.imageField] = imageUrl;
-      }
-
-      // Include tanggal yang dipilih
-      if (selectedDate) {
-        // Convert YYYY-MM-DD ke ISO datetime string
-        const dateObj = new Date(selectedDate + "T00:00:00");
-        payload.created_at = dateObj.toISOString();
-      }
-
-      const result = await supabaseBrowser.from(activeType).update(payload).eq("id", editingId);
+      const result = await supabaseBrowser.from(activeType).update(getPayload(imageUrl)).eq("id", editingId);
       if (result.error) throw result.error;
 
       showToast(`${currentConfig.label} berhasil diperbarui`, "success");
       setShowEditModal(false);
-      setEditingId(null);
-      setTitle("");
-      setDescription("");
-      setFile(null);
-      setImagePreview(null);
-      setSelectedDate("");
       setSelectedItem(null);
+      resetForm();
       await reloadDashboard();
     } catch (error) {
       console.error("Edit submit error", error);
@@ -292,22 +350,8 @@ export default function AdminPanel() {
 
   function cancelEditModal() {
     setShowEditModal(false);
-    setEditingId(null);
-    setTitle("");
-    setDescription("");
-    setFile(null);
-    setImagePreview(null);
-    setSelectedDate("");
     setSelectedItem(null);
-  }
-
-  function handleCancelEdit() {
-    setEditingId(null);
-    setTitle("");
-    setDescription("");
-    setFile(null);
-    setImagePreview(null);
-    setSelectedDate("");
+    resetForm();
   }
 
   async function handleSubmit(event) {
@@ -320,54 +364,12 @@ export default function AdminPanel() {
     setBusy(true);
 
     try {
-      let imageUrl = null;
-      const editingItem = activeItems.find((item) => item.id === editingId);
+      const imageUrl = await uploadImageIfAny();
+      const result = await supabaseBrowser.from(activeType).insert([getPayload(imageUrl)]);
+      if (result.error) throw result.error;
 
-      if (file) {
-        imageUrl = await uploadImageIfAny();
-        if (editingItem && editingItem[currentConfig.imageField]) {
-          await deleteOldImage(editingItem[currentConfig.imageField]);
-        }
-      }
-
-      const payload = {
-        [currentConfig.titleField]: title.trim(),
-      };
-
-      if (currentConfig.descriptionField) {
-        payload[currentConfig.descriptionField] = description.trim();
-      }
-
-      if (imageUrl) {
-        payload[currentConfig.imageField] = imageUrl;
-      }
-
-      // Include tanggal yang dipilih
-      if (selectedDate) {
-        // Convert YYYY-MM-DD ke ISO datetime string
-        const dateObj = new Date(selectedDate + "T00:00:00");
-        payload.created_at = dateObj.toISOString();
-      }
-
-      let error;
-      if (editingId) {
-        const result = await supabaseBrowser.from(activeType).update(payload).eq("id", editingId);
-        error = result.error;
-      } else {
-        const result = await supabaseBrowser.from(activeType).insert([payload]);
-        error = result.error;
-      }
-
-      if (error) throw error;
-
-      const action = editingId ? "diperbarui" : "ditambahkan";
-      showToast(`${currentConfig.label} berhasil ${action}`, "success");
-      setTitle("");
-      setDescription("");
-      setFile(null);
-      setImagePreview(null);
-      setEditingId(null);
-      setSelectedDate("");
+      showToast(`${currentConfig.label} berhasil ditambahkan`, "success");
+      resetForm();
       await reloadDashboard();
     } catch (error) {
       console.error("Submit error", error);
@@ -377,7 +379,7 @@ export default function AdminPanel() {
     }
   }
 
-  async function handleDelete(item) {
+  function handleDelete(item) {
     setSelectedItem(item);
     setShowDeleteModal(true);
   }
@@ -393,13 +395,10 @@ export default function AdminPanel() {
         await deleteOldImage(imageUrl);
       }
 
-      console.log(`[DELETE] Attempting to delete from table: ${activeType}, id: ${selectedItem.id}`);
-
-      // Use API route instead of direct Supabase call (bypass RLS policy)
-      const response = await fetch('/api/delete-item', {
-        method: 'POST',
+      const response = await fetch("/api/delete-item", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           table: activeType,
@@ -409,16 +408,9 @@ export default function AdminPanel() {
 
       const result = await response.json();
 
-      console.log("[DELETE] API Response:", result);
-
       if (!response.ok) {
-        console.error("[DELETE] API error:", result);
-        
-        if (result.error?.includes('Service role key not configured')) {
-          showToast(
-            `⚠️ Service role key belum dikonfigurasi.\nTambahkan SUPABASE_SERVICE_ROLE ke .env.local atau fix RLS Policy di Supabase dashboard.`,
-            "error"
-          );
+        if (result.error?.includes("Service role key not configured")) {
+          showToast("Service role key belum dikonfigurasi. Tambahkan SUPABASE_SERVICE_ROLE ke .env.local atau perbaiki RLS Policy.", "error");
         } else {
           showToast(result.error || "Gagal menghapus data", "error");
         }
@@ -426,13 +418,10 @@ export default function AdminPanel() {
         return;
       }
 
-      console.log("[DELETE] Success:", result);
       showToast(`${currentConfig.label} berhasil dihapus`, "success");
       setShowDeleteModal(false);
       setSelectedItem(null);
-      
-      // Delay kecil untuk memastikan database update
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await reloadDashboard();
     } catch (error) {
       console.error("[DELETE] Error caught:", error);
@@ -446,9 +435,6 @@ export default function AdminPanel() {
     setBusy(true);
     try {
       const existing = await supabaseBrowser.from("statistik").select("id").single();
-      let error;
-
-      // Map app fields to database fields
       const dbPayload = {
         jumlah_penduduk: tempStats.penduduk,
         jumlah_dusun: tempStats.dusun,
@@ -456,15 +442,11 @@ export default function AdminPanel() {
         jumlah_rt_rw: tempStats.rtrw,
       };
 
-      if (existing.data) {
-        const result = await supabaseBrowser.from("statistik").update(dbPayload).eq("id", existing.data.id);
-        error = result.error;
-      } else {
-        const result = await supabaseBrowser.from("statistik").insert([dbPayload]);
-        error = result.error;
-      }
+      const result = existing.data
+        ? await supabaseBrowser.from("statistik").update(dbPayload).eq("id", existing.data.id)
+        : await supabaseBrowser.from("statistik").insert([dbPayload]);
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       setStats(tempStats);
       setStatsEditing(false);
@@ -480,38 +462,46 @@ export default function AdminPanel() {
 
   if (!user) {
     return (
-      <div className="section-wrap mx-auto max-w-md p-6 md:p-8">
-        <h3 className="font-[Sora] text-2xl font-semibold text-[var(--brand)]">Login Admin</h3>
-        <p className="mt-1 text-sm text-[var(--muted)]">Masuk dengan akun Supabase Auth untuk mengelola konten website.</p>
-
-        <form onSubmit={handleSignIn} className="mt-5 space-y-4">
+      <div className="mx-auto max-w-md rounded-lg border border-[var(--line)] bg-white p-6 shadow-[0_18px_45px_rgba(31,43,36,0.08)] md:p-8">
+        <div className="mb-6 flex items-start gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--surface-soft)] text-[var(--brand)]">
+            <Users size={21} />
+          </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-[var(--muted)]">Email</label>
+            <h3 className="font-[Sora] text-xl font-semibold text-[var(--brand)]">Masuk Admin</h3>
+            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">Gunakan akun pengelola untuk memperbarui konten website padukuhan.</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSignIn} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Email</label>
             <input
               type="email"
               value={authEmail}
               onChange={(event) => setAuthEmail(event.target.value)}
               required
-              className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none ring-[var(--brand)]/20 focus:ring"
+              className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[var(--muted)]">Password</label>
+            <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Password</label>
             <input
               type="password"
               value={authPassword}
               onChange={(event) => setAuthPassword(event.target.value)}
               required
-              className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none ring-[var(--brand)]/20 focus:ring"
+              className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
             />
           </div>
 
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--brand-2)] disabled:opacity-70"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-2)] disabled:opacity-70"
           >
+            {busy && <Loader2 size={16} className="animate-spin" />}
             {busy ? "Memproses..." : "Masuk"}
           </button>
         </form>
@@ -522,382 +512,401 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="rounded-2xl border border-[var(--line)] bg-gradient-to-r from-[var(--surface-soft)] to-white p-6 md:p-8">
-        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+    <div className="space-y-5">
+      <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-[0_16px_40px_rgba(31,43,36,0.07)] md:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h3 className="font-[Sora] text-2xl font-bold text-[var(--brand)]">Dashboard Admin</h3>
-            <p className="mt-2 text-sm text-[var(--muted)]">Admin: <span className="font-semibold">{user.email}</span></p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">Ruang pengelola</p>
+            <h3 className="mt-2 font-[Sora] text-2xl font-semibold text-[var(--brand)]">Data Website Padukuhan</h3>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Masuk sebagai <span className="font-semibold text-[var(--foreground)]">{user.email}</span>
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-              <span className="text-xs font-semibold text-emerald-700">Realtime ON</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+              <CheckCircle2 size={15} />
+              Realtime aktif
             </span>
+            <button
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--brand)]"
+            >
+              <LogOut size={16} />
+              Keluar
+            </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article className="stat-card rounded-2xl border border-[var(--line)] p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Berita</p>
-              <p className="mt-3 text-4xl font-bold text-[var(--brand)]">{counts.berita}</p>
-            </div>
-            <span className="text-3xl">📰</span>
-          </div>
-        </article>
-
-        <article className="stat-card rounded-2xl border border-[var(--line)] p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Kegiatan</p>
-              <p className="mt-3 text-4xl font-bold text-[var(--brand)]">{counts.kegiatan}</p>
-            </div>
-            <span className="text-3xl">🎯</span>
-          </div>
-        </article>
-
-        <article className="stat-card rounded-2xl border border-[var(--line)] p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Galeri</p>
-              <p className="mt-3 text-4xl font-bold text-[var(--brand)]">{counts.galeri}</p>
-            </div>
-            <span className="text-3xl">🖼️</span>
-          </div>
-        </article>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <article key={card.label} className="rounded-lg border border-[var(--line)] bg-white p-4 shadow-[0_10px_26px_rgba(31,43,36,0.05)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm text-[var(--muted)]">{card.label}</p>
+                  <p className="mt-2 text-3xl font-semibold text-[var(--brand)]">{card.value}</p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-soft)] text-[var(--brand)]">
+                  <Icon size={20} />
+                </div>
+              </div>
+            </article>
+          );
+        })}
 
         <button
           onClick={() => setStatsEditing(!statsEditing)}
-          className="stat-card group rounded-2xl border border-[var(--line)] p-5 text-left transition-all"
+          className="rounded-lg border border-[var(--line)] bg-white p-4 text-left shadow-[0_10px_26px_rgba(31,43,36,0.05)] transition hover:border-[var(--brand)]/30 hover:bg-[var(--surface-soft)]"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Statistik</p>
-              <p className="mt-3 text-sm font-bold text-[var(--accent)] group-hover:text-[var(--brand)]">Kelola Data</p>
+              <p className="text-sm text-[var(--muted)]">Statistik</p>
+              <p className="mt-2 text-sm font-semibold text-[var(--brand)]">{statsEditing ? "Tutup pengaturan" : "Kelola angka utama"}</p>
             </div>
-            <span className="text-3xl">⚙️</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-soft)] text-[var(--brand)]">
+              <Settings2 size={20} />
+            </div>
           </div>
         </button>
       </div>
 
-      {/* Statistik Editor */}
       {statsEditing && (
-        <section className="fade-up rounded-2xl border border-[var(--line)] bg-gradient-to-r from-amber-50 to-white p-6 md:p-8">
-          <h4 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Kelola Statistik Padukuhan</h4>
-          <p className="mt-1 text-sm text-[var(--muted)]">Update data statistik yang ditampilkan di halaman utama</p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-[0_16px_40px_rgba(31,43,36,0.06)] md:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">📊 Jumlah Penduduk</label>
-              <input
-                type="number"
-                value={tempStats.penduduk}
-                onChange={(e) => setTempStats({ ...tempStats, penduduk: parseInt(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3 outline-none ring-[var(--brand)]/20 focus:ring"
-              />
+              <h4 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Statistik Padukuhan</h4>
+              <p className="mt-1 text-sm text-[var(--muted)]">Angka ini ditampilkan pada halaman utama.</p>
             </div>
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">🏘️ Jumlah Dusun</label>
-              <input
-                type="number"
-                value={tempStats.dusun}
-                onChange={(e) => setTempStats({ ...tempStats, dusun: parseInt(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3 outline-none ring-[var(--brand)]/20 focus:ring"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">🏪 Jumlah UMKM</label>
-              <input
-                type="number"
-                value={tempStats.umkm}
-                onChange={(e) => setTempStats({ ...tempStats, umkm: parseInt(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3 outline-none ring-[var(--brand)]/20 focus:ring"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">🏛️ Jumlah RT/RW</label>
-              <input
-                type="number"
-                value={tempStats.rtrw}
-                onChange={(e) => setTempStats({ ...tempStats, rtrw: parseInt(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3 outline-none ring-[var(--brand)]/20 focus:ring"
-              />
-            </div>
+            <button
+              onClick={() => setStatsEditing(false)}
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-soft)]"
+            >
+              <X size={16} />
+              Tutup
+            </button>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {villageStats.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.key}>
+                  <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-[var(--foreground)]">
+                    <Icon size={16} className="text-[var(--brand)]" />
+                    {item.label}
+                  </label>
+                  <input
+                    type="number"
+                    value={tempStats[item.key]}
+                    onChange={(e) => setTempStats({ ...tempStats, [item.key]: parseInt(e.target.value) || 0 })}
+                    className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
             <button
               onClick={handleSaveStats}
               disabled={busy}
-              className="rounded-xl bg-[var(--brand)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--brand-2)] disabled:opacity-70 transition-all"
+              className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-2)] disabled:opacity-70"
             >
-              {busy ? "Menyimpan..." : "💾 Simpan Statistik"}
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {busy ? "Menyimpan..." : "Simpan Statistik"}
             </button>
             <button
-              onClick={() => setStatsEditing(false)}
-              className="rounded-xl border border-[var(--line)] px-6 py-3 text-sm font-semibold text-[var(--brand)] hover:bg-[var(--surface-soft)] transition-all"
+              onClick={() => setTempStats(stats)}
+              className="rounded-lg border border-[var(--line)] px-4 py-2.5 text-sm font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-soft)]"
             >
-              Batal
+              Kembalikan
             </button>
           </div>
         </section>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        {/* Form Section */}
-        <section className="rounded-2xl border border-[var(--line)] bg-white p-6">
-          <h4 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">
-            {editingId ? "✏️ Edit Konten" : "➕ Tambah Konten"}
-          </h4>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            {editingId ? "Perbarui data konten yang sudah ada" : "Buat konten baru untuk website"}
-          </p>
+      <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
+        <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-[0_16px_40px_rgba(31,43,36,0.06)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h4 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Tambah Konten</h4>
+              <p className="mt-1 text-sm text-[var(--muted)]">Isi data seperlunya, lalu simpan ke website.</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-soft)] text-[var(--brand)]">
+              <Plus size={20} />
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            {!editingId && (
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">Jenis Konten</label>
-                <select
-                  value={activeType}
-                  onChange={(event) => setActiveType(event.target.value)}
-                  className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 outline-none ring-[var(--brand)]/20 focus:ring text-sm"
-                >
-                  {TABLES.map((tableName) => (
-                    <option key={tableName} value={tableName}>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[var(--foreground)]">Jenis Konten</label>
+              <div className="grid grid-cols-3 gap-2">
+                {TABLES.map((tableName) => {
+                  const Icon = CONTENT_CONFIG[tableName].icon;
+                  const isActive = activeType === tableName;
+                  return (
+                    <button
+                      type="button"
+                      key={tableName}
+                      onClick={() => {
+                        setActiveType(tableName);
+                        resetForm();
+                      }}
+                      className={`flex min-h-20 flex-col items-center justify-center gap-2 rounded-lg border px-2 py-3 text-xs font-semibold transition ${
+                        isActive
+                          ? "border-[var(--brand)] bg-[var(--surface-soft)] text-[var(--brand)]"
+                          : "border-[var(--line)] bg-white text-[var(--muted)] hover:border-[var(--brand)]/30 hover:text-[var(--brand)]"
+                      }`}
+                    >
+                      <Icon size={18} />
                       {CONTENT_CONFIG[tableName].label}
-                    </option>
-                  ))}
-                </select>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">Judul *</label>
+              <label className="mb-2 block text-sm font-semibold text-[var(--foreground)]">Judul *</label>
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 required
-                className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/20 focus:ring"
+                className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
                 placeholder={`Judul ${currentConfig.label.toLowerCase()}`}
               />
             </div>
 
             {currentConfig.descriptionField && (
               <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">Deskripsi</label>
+                <label className="mb-2 block text-sm font-semibold text-[var(--foreground)]">Deskripsi</label>
                 <textarea
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  rows={3}
-                  className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/20 focus:ring"
-                  placeholder="Isi konten singkat"
+                  rows={4}
+                  className="w-full resize-none rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
+                  placeholder="Tulis isi singkat untuk ditampilkan"
                 />
               </div>
             )}
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">Gambar (Opsional)</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="block w-full text-sm rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
-              />
-              <p className="mt-1 text-xs text-[var(--muted)]">PNG, JPG, WebP (max 5MB)</p>
+              <label className="mb-2 block text-sm font-semibold text-[var(--foreground)]">Gambar</label>
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-soft)] px-4 py-5 text-center transition hover:border-[var(--brand)]/40">
+                <UploadCloud size={24} className="text-[var(--brand)]" />
+                <span className="mt-2 text-sm font-semibold text-[var(--foreground)]">Pilih gambar</span>
+                <span className="mt-1 text-xs text-[var(--muted)]">PNG, JPG, atau WebP</span>
+                <input type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+              </label>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">📅 Pilih Tanggal</label>
+              <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-[var(--foreground)]">
+                <CalendarDays size={16} className="text-[var(--brand)]" />
+                Tanggal
+              </label>
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(event) => setSelectedDate(event.target.value)}
-                className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/20 focus:ring"
+                className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
               />
-              <p className="mt-1 text-xs text-[var(--muted)]">Kosongkan untuk gunakan tanggal saat ini</p>
+              <p className="mt-1 text-xs text-[var(--muted)]">Kosongkan untuk memakai tanggal saat ini.</p>
             </div>
 
             {imagePreview && (
-              <div className="rounded-xl border border-[var(--line)] overflow-hidden">
-                <p className="bg-[var(--surface-soft)] px-3 py-2 text-xs font-semibold text-[var(--muted)]">Preview Gambar</p>
-                <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover" />
+              <div className="overflow-hidden rounded-lg border border-[var(--line)]">
+                <img src={imagePreview} alt="Preview" className="h-36 w-full object-cover" />
               </div>
             )}
 
-            <div className="flex gap-2 pt-2">
-              <button
-                type="submit"
-                disabled={busy}
-                className="flex-1 rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--brand-2)] disabled:opacity-70 transition-all"
-              >
-                {busy ? "Menyimpan..." : editingId ? "Update" : "Simpan"}
-              </button>
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="rounded-xl border border-[var(--line)] px-4 py-2.5 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-soft)] transition-all"
-                >
-                  Batal
-                </button>
-              )}
-            </div>
+            <button
+              type="submit"
+              disabled={busy}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-2)] disabled:opacity-70"
+            >
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {busy ? "Menyimpan..." : "Simpan Konten"}
+            </button>
           </form>
         </section>
 
-        {/* Data List Section */}
-        <section className="rounded-2xl border border-[var(--line)] bg-white p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Data {currentConfig.label}</h4>
-              <p className="mt-1 text-xs text-[var(--muted)]">{activeItems.length} item • Update realtime</p>
+        <section className="rounded-lg border border-[var(--line)] bg-white shadow-[0_16px_40px_rgba(31,43,36,0.06)]">
+          <div className="border-b border-[var(--line)] p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-soft)] text-[var(--brand)]">
+                  <CurrentIcon size={20} />
+                </div>
+                <div>
+                  <h4 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Data {currentConfig.label}</h4>
+                  <p className="mt-1 text-sm text-[var(--muted)]">{activeItems.length} item tersimpan</p>
+                </div>
+              </div>
+              <div className="flex rounded-lg border border-[var(--line)] bg-[var(--surface-soft)] p-1">
+                {TABLES.map((tableName) => (
+                  <button
+                    key={tableName}
+                    onClick={() => {
+                      setActiveType(tableName);
+                      resetForm();
+                    }}
+                    className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                      activeType === tableName ? "bg-white text-[var(--brand)] shadow-sm" : "text-[var(--muted)] hover:text-[var(--brand)]"
+                    }`}
+                  >
+                    {CONTENT_CONFIG[tableName].label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="mt-5 max-h-[540px] space-y-3 overflow-auto pr-2">
+          <div className="max-h-[620px] overflow-auto p-5">
             {activeItems.length === 0 && (
-              <div className="rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface-soft)] p-6 text-center text-sm text-[var(--muted)]">
-                <p className="text-lg mb-1">📭</p>
-                <p className="font-medium">Belum ada data {currentConfig.label.toLowerCase()}</p>
-                <p className="text-xs mt-1">Tambahkan konten baru di form sebelah</p>
+              <div className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-soft)] p-8 text-center">
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-white text-[var(--brand)]">
+                  <CurrentIcon size={21} />
+                </div>
+                <p className="mt-3 font-semibold text-[var(--foreground)]">Belum ada data {currentConfig.label.toLowerCase()}</p>
+                <p className="mt-1 text-sm text-[var(--muted)]">Tambahkan konten pertama dari form di sebelah kiri.</p>
               </div>
             )}
 
-            {activeItems.map((item) => {
-              const itemTitle = item[currentConfig.titleField] || "Tanpa judul";
-              const itemDescription = currentConfig.descriptionField ? item[currentConfig.descriptionField] : "";
-              const imageUrl = item[currentConfig.imageField];
+            <div className="space-y-3">
+              {activeItems.map((item) => {
+                const itemTitle = item[currentConfig.titleField] || "Tanpa judul";
+                const itemDescription = currentConfig.descriptionField ? item[currentConfig.descriptionField] : "";
+                const imageUrl = item[currentConfig.imageField];
 
-              return (
-                <article key={item.id} className="card-hover-glow overflow-hidden rounded-2xl border border-[var(--line)] bg-white transition-all">
-                  {imageUrl && (
-                    <div className="h-24 overflow-hidden bg-[var(--surface-soft)]">
-                      <img src={imageUrl} alt={itemTitle} className="h-full w-full object-cover" />
+                return (
+                  <article key={item.id} className="grid gap-4 rounded-lg border border-[var(--line)] bg-white p-3 transition hover:border-[var(--brand)]/30 hover:bg-[var(--surface-soft)] md:grid-cols-[132px_1fr]">
+                    <div className="h-28 overflow-hidden rounded-md bg-[var(--surface-soft)]">
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={itemTitle} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[var(--muted)]">
+                          <ImageIcon size={24} />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div className="p-4">
-                    <h5 className="font-semibold text-[var(--brand)] line-clamp-2">{itemTitle}</h5>
-                    {itemDescription && (
-                      <p className="mt-2 line-clamp-2 text-xs text-[var(--muted)]">{itemDescription}</p>
-                    )}
-                    <div className="mt-3 flex items-center justify-between gap-2">
-                      <span className="text-xs text-[var(--muted)]">
-                        {item.created_at
-                          ? new Date(item.created_at).toLocaleDateString("id-ID", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })
-                          : "-"}
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-all"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item)}
-                          className="rounded-lg bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-100 transition-all"
-                        >
-                          Hapus
-                        </button>
+                    <div className="min-w-0">
+                      <div className="flex gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h5 className="line-clamp-2 font-semibold text-[var(--foreground)]">{itemTitle}</h5>
+                          {itemDescription && <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{itemDescription}</p>}
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          <AdminIconButton onClick={() => handleEdit(item)} aria-label={`Edit ${itemTitle}`}>
+                            <Pencil size={16} />
+                          </AdminIconButton>
+                          <AdminIconButton onClick={() => handleDelete(item)} aria-label={`Hapus ${itemTitle}`} className="hover:border-red-200 hover:bg-red-50 hover:text-red-600">
+                            <Trash2 size={16} />
+                          </AdminIconButton>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2 text-xs font-medium text-[var(--muted)]">
+                        <CalendarDays size={14} />
+                        {formatDate(item.created_at)}
                       </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </section>
       </div>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* Edit Modal */}
       {showEditModal && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-white rounded-2xl border border-[var(--line)] shadow-xl">
-            <div className="sticky top-0 bg-gradient-to-r from-[var(--brand)]/10 to-[var(--accent)]/10 px-6 py-4 border-b border-[var(--line)]">
-              <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">✏️ Edit {currentConfig.label}</h3>
-              <p className="text-sm text-[var(--muted)] mt-1">Perbarui data di form ini</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-[var(--line)] bg-white shadow-xl">
+            <div className="sticky top-0 border-b border-[var(--line)] bg-white px-5 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Edit {currentConfig.label}</h3>
+                  <p className="mt-1 text-sm text-[var(--muted)]">Perbarui data lalu simpan perubahan.</p>
+                </div>
+                <AdminIconButton type="button" onClick={cancelEditModal} aria-label="Tutup modal edit">
+                  <X size={16} />
+                </AdminIconButton>
+              </div>
             </div>
 
-            <form onSubmit={confirmEditSubmit} className="p-6 space-y-4">
+            <form onSubmit={confirmEditSubmit} className="space-y-4 p-5">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">Judul *</label>
+                <label className="mb-2 block text-sm font-semibold text-[var(--foreground)]">Judul *</label>
                 <input
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
                   required
-                  className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/20 focus:ring"
+                  className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
                   placeholder={`Judul ${currentConfig.label.toLowerCase()}`}
                 />
               </div>
 
               {currentConfig.descriptionField && (
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">Deskripsi</label>
+                  <label className="mb-2 block text-sm font-semibold text-[var(--foreground)]">Deskripsi</label>
                   <textarea
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
-                    rows={3}
-                    className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/20 focus:ring"
-                    placeholder="Isi konten singkat"
+                    rows={4}
+                    className="w-full resize-none rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
+                    placeholder="Tulis isi singkat untuk ditampilkan"
                   />
                 </div>
               )}
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">Gambar (Opsional)</label>
+                <label className="mb-2 block text-sm font-semibold text-[var(--foreground)]">Gambar</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="block w-full text-sm rounded-xl border border-[var(--line)] bg-white px-3 py-2.5"
+                  className="block w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm"
                 />
-                <p className="mt-1 text-xs text-[var(--muted)]">PNG, JPG, WebP (max 5MB)</p>
               </div>
 
               {(imagePreview || selectedItem[currentConfig.imageField]) && (
-                <div className="rounded-xl border border-[var(--line)] overflow-hidden">
-                  <p className="bg-[var(--surface-soft)] px-3 py-2 text-xs font-semibold text-[var(--muted)]">Preview Gambar</p>
-                  <img src={imagePreview || selectedItem[currentConfig.imageField]} alt="Preview" className="w-full h-32 object-cover" />
+                <div className="overflow-hidden rounded-lg border border-[var(--line)]">
+                  <img src={imagePreview || selectedItem[currentConfig.imageField]} alt="Preview" className="h-40 w-full object-cover" />
                 </div>
               )}
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--brand)]">📅 Pilih Tanggal</label>
+                <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-[var(--foreground)]">
+                  <CalendarDays size={16} className="text-[var(--brand)]" />
+                  Tanggal
+                </label>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(event) => setSelectedDate(event.target.value)}
-                  className="w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/20 focus:ring"
+                  className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none ring-[var(--brand)]/15 transition focus:border-[var(--brand)] focus:ring"
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={cancelEditModal}
                   disabled={busy}
-                  className="flex-1 rounded-xl border border-[var(--line)] px-4 py-2.5 text-sm font-semibold text-[var(--brand)] hover:bg-[var(--surface-soft)] transition-all disabled:opacity-70"
+                  className="flex-1 rounded-lg border border-[var(--line)] px-4 py-2.5 text-sm font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-soft)] disabled:opacity-70"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="flex-1 rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-600 transition-all disabled:opacity-70"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-2)] disabled:opacity-70"
                 >
-                  {busy ? "Menyimpan..." : "💾 Simpan"}
+                  {busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  {busy ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
             </form>
@@ -905,61 +914,55 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Delete Modal */}
       {showDeleteModal && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="max-w-sm w-full bg-white rounded-2xl border border-[var(--line)] shadow-xl overflow-hidden animate-in">
-            <div className="bg-gradient-to-r from-red-50 to-orange-50 px-6 py-4 border-b border-[var(--line)]">
-              <h3 className="font-[Sora] text-lg font-semibold text-red-600">🗑️ Hapus Konten</h3>
-              <p className="text-sm text-red-600/70 mt-1">Tindakan ini tidak dapat dibatalkan</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-lg border border-[var(--line)] bg-white shadow-xl">
+            <div className="border-b border-red-100 bg-red-50 px-5 py-4">
+              <h3 className="font-[Sora] text-lg font-semibold text-red-700">Hapus Konten</h3>
+              <p className="mt-1 text-sm text-red-700/75">Data yang dihapus tidak bisa dikembalikan dari panel ini.</p>
             </div>
 
-            <div className="p-6">
-              <div className="mb-4 rounded-xl overflow-hidden bg-[var(--surface-soft)]">
-                {selectedItem[currentConfig.imageField] && (
-                  <img 
-                    src={selectedItem[currentConfig.imageField]} 
-                    alt={selectedItem[currentConfig.titleField]} 
-                    className="w-full h-32 object-cover opacity-75"
+            <div className="p-5">
+              {selectedItem[currentConfig.imageField] && (
+                <div className="mb-4 overflow-hidden rounded-lg bg-[var(--surface-soft)]">
+                  <img
+                    src={selectedItem[currentConfig.imageField]}
+                    alt={selectedItem[currentConfig.titleField]}
+                    className="h-32 w-full object-cover opacity-80"
                   />
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.08em] text-[var(--muted)] font-semibold mb-1">Judul</p>
-                  <p className="text-sm font-semibold text-[var(--brand)]">{selectedItem[currentConfig.titleField]}</p>
                 </div>
+              )}
 
-                {currentConfig.descriptionField && selectedItem[currentConfig.descriptionField] && (
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.08em] text-[var(--muted)] font-semibold mb-1">Deskripsi</p>
-                    <p className="text-sm text-[var(--muted)] line-clamp-2">{selectedItem[currentConfig.descriptionField]}</p>
-                  </div>
-                )}
-              </div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Judul</p>
+              <p className="mt-1 font-semibold text-[var(--foreground)]">{selectedItem[currentConfig.titleField]}</p>
 
-              <p className="text-sm text-red-600 mt-4 font-semibold">
-                ⚠️ Yakin ingin menghapus "{selectedItem[currentConfig.titleField]}"?
-              </p>
+              {currentConfig.descriptionField && selectedItem[currentConfig.descriptionField] && (
+                <>
+                  <p className="mt-4 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Deskripsi</p>
+                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{selectedItem[currentConfig.descriptionField]}</p>
+                </>
+              )}
+
+              <p className="mt-5 text-sm font-semibold text-red-700">Yakin ingin menghapus konten ini?</p>
             </div>
 
-            <div className="bg-[var(--surface-soft)] px-6 py-4 flex gap-3">
+            <div className="flex gap-3 border-t border-[var(--line)] bg-[var(--surface-soft)] px-5 py-4">
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
                   setSelectedItem(null);
                 }}
                 disabled={busy}
-                className="flex-1 rounded-xl border border-[var(--line)] px-4 py-2.5 text-sm font-semibold text-[var(--brand)] hover:bg-white transition-all disabled:opacity-70"
+                className="flex-1 rounded-lg border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--muted)] transition hover:text-[var(--brand)] disabled:opacity-70"
               >
                 Batal
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={busy}
-                className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 transition-all disabled:opacity-70"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-70"
               >
+                {busy ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                 {busy ? "Menghapus..." : "Hapus"}
               </button>
             </div>

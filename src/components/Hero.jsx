@@ -1,116 +1,118 @@
 "use client";
-// Hero section (client) with image carousel
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ArrowDown, Image as ImageIcon, MapPin, Newspaper } from "lucide-react";
 
 const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1800&q=80",
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1800&q=80",
-  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1800&q=80",
+  {
+    src: "https://img.youtube.com/vi/FAAQ8APLvng/maxresdefault.jpg",
+    alt: "Suasana dokumentasi Padukuhan Mertelu",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80",
+    alt: "Pemandangan perbukitan dan permukiman desa",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=80",
+    alt: "Lanskap sawah dan suasana pedesaan",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?auto=format&fit=crop&w=1800&q=80",
+    alt: "Hamparan hijau wilayah pertanian",
+  },
 ];
 
 export default function Hero() {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 2000); // Ganti gambar setiap 2 detik
+    const timer = setInterval(() => {
+      setActiveSlide((current) => (current + 1) % HERO_IMAGES.length);
+    }, 2000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, []);
 
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + HERO_IMAGES.length) % HERO_IMAGES.length);
-  };
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length);
-  };
-
   return (
-    <section className="relative mx-auto mt-2 w-full max-w-6xl overflow-hidden rounded-[28px] border border-[var(--line)]">
-      {/* Carousel */}
-      <div className="relative h-[46vh] md:h-[52vh] overflow-hidden">
-        {HERO_IMAGES.map((image, index) => (
-          <img
-            key={index}
-            src={image}
-            alt={`Hero slide ${index + 1}`}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-              index === currentSlide ? "opacity-100" : "opacity-0"
-            }`}
-          />
-        ))}
+    <section id="beranda" className="relative isolate mt-3 overflow-hidden">
+      <div className="mx-auto max-w-6xl px-4 md:px-6">
+        <div className="relative min-h-[640px] overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--brand)] shadow-[0_22px_70px_rgba(20,31,24,0.22)] sm:min-h-[600px] md:min-h-[620px]">
+          {HERO_IMAGES.map((image, index) => (
+            <img
+              key={image.src}
+              src={image.src}
+              alt={image.alt}
+              className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-out ${
+                index === activeSlide ? "scale-100 opacity-100" : "scale-[1.03] opacity-0"
+              }`}
+            />
+          ))}
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,24,18,0.88),rgba(18,48,36,0.62)_48%,rgba(18,48,36,0.2))]" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/45 to-transparent" />
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(12,29,22,0.85)] via-[rgba(14,38,29,0.68)] to-[rgba(14,38,29,0.2)]" />
+          <div className="relative flex min-h-[640px] flex-col justify-between px-5 py-6 text-white sm:min-h-[600px] sm:px-8 md:min-h-[620px] md:px-10 md:py-9">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-white/25 bg-white/10 px-3 py-2 backdrop-blur">
+                <MapPin size={14} />
+                Padukuhan Mertelu
+              </span>
+              <span className="rounded-lg border border-white/20 bg-black/20 px-3 py-2 backdrop-blur">Profil dan kabar warga</span>
+            </div>
 
-        {/* Content */}
-        <div className="absolute inset-0 flex items-center justify-center px-6 py-12 text-center md:px-10">
-          <div className="max-w-3xl text-white">
-            <p className="section-kicker text-white/80 fade-up" style={{ animationDelay: '0.1s' }}>Website Resmi Padukuhan</p>
-            <h1 className="mt-3 font-[Sora] text-3xl font-bold leading-tight md:text-5xl fade-up" style={{ animationDelay: '0.2s' }}>
-              Padukuhan Mertelu
-              <span className="mt-2 block text-base font-medium text-white/80 md:text-xl">Harmoni Alam, Kebersamaan, dan Kemajuan</span>
-            </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/85 md:text-base fade-up" style={{ animationDelay: '0.3s' }}>
-              Ruang informasi untuk warga dan pengunjung. Temukan profil padukuhan, kegiatan terbaru, dokumentasi galeri, serta data singkat yang terus diperbarui.
-            </p>
+            <div className="max-w-3xl pb-4 pt-12 md:pb-12">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Website Padukuhan</p>
+              <h1 className="mt-4 max-w-[12ch] font-[Sora] text-4xl font-semibold leading-[1.08] sm:text-5xl md:text-7xl">
+                Mertelu yang tumbuh bersama warganya.
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-white/86 md:text-lg">
+                Ruang sederhana untuk mengenal profil padukuhan, mengikuti kabar terbaru, melihat kegiatan warga, dan menyimpan dokumentasi yang terus diperbarui.
+              </p>
 
-            <div className="mt-6 flex flex-wrap justify-center gap-3 fade-up" style={{ animationDelay: '0.4s' }}>
-              <a href="#kegiatan" className="rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(9,16,12,0.32)] hover:opacity-90 transition-all hover:scale-105">Jelajahi Kegiatan</a>
-              <a href="#profil" className="rounded-xl border border-white/50 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/20 transition-all hover:scale-105">Lihat Profil</a>
-              <a href="#galeri" className="rounded-xl border border-white/20 bg-black/20 px-5 py-3 text-sm font-semibold text-white hover:bg-black/30 transition-all hover:scale-105">Buka Galeri</a>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href="#profil"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-[var(--brand)] shadow-[0_14px_34px_rgba(0,0,0,0.2)] transition hover:bg-[var(--surface-soft)]"
+                >
+                  <ArrowDown size={17} />
+                  Mengenal Mertelu
+                </a>
+                <a
+                  href="#berita"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/18"
+                >
+                  <Newspaper size={17} />
+                  Baca Berita
+                </a>
+                <a
+                  href="#galeri"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/25 bg-black/20 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-black/30"
+                >
+                  <ImageIcon size={17} />
+                  Lihat Galeri
+                </a>
+              </div>
+            </div>
+
+            <div className="grid gap-2 text-sm text-white/84 sm:grid-cols-3">
+              {["Informasi publik", "Kegiatan warga", "Dokumentasi padukuhan"].map((item) => (
+                <div key={item} className="rounded-lg border border-white/18 bg-black/22 px-4 py-3 backdrop-blur">
+                  {item}
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="absolute bottom-4 right-4 hidden w-[230px] rounded-2xl border border-white/30 bg-black/30 p-3 text-white backdrop-blur md:block fade-up" style={{ animationDelay: '0.5s' }}>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/70">Sorotan</p>
-            <p className="mt-1 text-xs leading-relaxed">Padukuhan yang menjaga tradisi sambil bergerak maju bersama teknologi.</p>
+          <div className="absolute bottom-5 right-5 z-10 hidden items-center gap-2 rounded-full border border-white/20 bg-black/25 px-3 py-2 backdrop-blur sm:flex">
+            {HERO_IMAGES.map((image, index) => (
+              <button
+                key={image.src}
+                type="button"
+                onClick={() => setActiveSlide(index)}
+                aria-label={`Tampilkan gambar ${index + 1}`}
+                className={`h-2 rounded-full transition-all ${index === activeSlide ? "w-7 bg-white" : "w-2 bg-white/45 hover:bg-white/75"}`}
+              />
+            ))}
           </div>
-        </div>
-
-        {/* Prev Button */}
-        <button
-          onClick={prevSlide}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur hover:bg-white/30 transition md:h-12 md:w-12"
-          aria-label="Gambar sebelumnya"
-        >
-          <svg className="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        {/* Next Button */}
-        <button
-          onClick={nextSlide}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur hover:bg-white/30 transition md:h-12 md:w-12"
-          aria-label="Gambar berikutnya"
-        >
-          <svg className="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-
-        {/* Dot Indicators */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-          {HERO_IMAGES.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`h-2 rounded-full transition-all ${
-                index === currentSlide
-                  ? "bg-white w-6"
-                  : "bg-white/50 w-2 hover:bg-white/75"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
         </div>
       </div>
     </section>

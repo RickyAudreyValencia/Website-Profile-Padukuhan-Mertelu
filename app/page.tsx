@@ -2,6 +2,25 @@ import { supabase } from "../src/lib/supabase";
 import Hero from "../src/components/Hero";
 import LiveHomepage from "../src/components/LiveHomepage";
 import Footer from "../src/components/Footer";
+import { HeartHandshake, Leaf, Sprout } from "lucide-react";
+
+const profileCards = [
+  {
+    title: "Kebersamaan",
+    text: "Gotong royong menjadi cara warga menyelesaikan banyak hal.",
+    Icon: HeartHandshake,
+  },
+  {
+    title: "Lingkungan",
+    text: "Ruang hidup dijaga lewat kegiatan dan kepedulian harian.",
+    Icon: Leaf,
+  },
+  {
+    title: "Kemandirian",
+    text: "Potensi warga, UMKM, dan kegiatan lokal terus ditumbuhkan.",
+    Icon: Sprout,
+  },
+];
 
 async function fetchTable(table: string) {
   try {
@@ -56,33 +75,37 @@ export default async function Home() {
       <Hero />
 
       <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
-        <section id="profil" className="section-wrap fade-up mb-6 p-6 md:p-8">
-          <p className="section-kicker">Profil Padukuhan</p>
-          <h2 className="section-title mt-2 text-2xl md:text-3xl">Mengenal Padukuhan Mertelu</h2>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--muted)] md:text-base">
-            Padukuhan Mertelu dikenal sebagai wilayah yang menjaga nilai kebersamaan, budaya gotong royong, dan semangat kemandirian warga.
-            Melalui website ini, informasi publik disajikan lebih terbuka dan mudah diakses.
-          </p>
+        <section id="profil" className="fade-up mb-6 rounded-lg border border-[var(--line)] bg-white p-5 shadow-[0_16px_44px_rgba(31,43,36,0.07)] md:p-7">
+          <div className="grid gap-7 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+            <div>
+              <p className="section-kicker">Profil Padukuhan</p>
+              <h2 className="section-title mt-2 text-2xl md:text-4xl">Mengenal Padukuhan Mertelu</h2>
+              <p className="mt-4 text-sm leading-7 text-[var(--muted)] md:text-base md:leading-8">
+                Mertelu tumbuh dari kebiasaan saling mengenal, bekerja bersama, dan menjaga lingkungan sekitar. Website ini dibuat sebagai ruang informasi yang dekat dengan warga, mudah diperbarui, dan tetap terasa sederhana.
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                {profileCards.map(({ title, text, Icon }) => (
+                  <article key={title} className="rounded-lg border border-[var(--line)] bg-[var(--surface-soft)] p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--brand)]">
+                        <Icon size={19} />
+                      </div>
+                      <div>
+                        <h3 className="font-[Sora] text-base font-semibold text-[var(--foreground)]">{title}</h3>
+                        <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{text}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            <article className="rounded-2xl border border-[var(--line)] bg-white p-5">
-              <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Sejarah Singkat</h3>
-              <p className="mt-2 text-sm text-[var(--muted)]">Bertumbuh dari komunitas agraris yang kuat, Mertelu berkembang menjadi padukuhan yang adaptif dan aktif dalam kegiatan sosial.</p>
-            </article>
-            <article className="rounded-2xl border border-[var(--line)] bg-white p-5">
-              <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Visi</h3>
-              <p className="mt-2 text-sm text-[var(--muted)]">Menjadi padukuhan mandiri, sehat, dan produktif dengan pelayanan publik yang transparan serta berbasis partisipasi warga.</p>
-            </article>
-            <article className="rounded-2xl border border-[var(--line)] bg-white p-5">
-              <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Misi</h3>
-              <p className="mt-2 text-sm text-[var(--muted)]">Menguatkan UMKM lokal, meningkatkan kualitas lingkungan, dan mendorong kolaborasi antarwarga di setiap program padukuhan.</p>
-            </article>
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-[var(--line)] bg-white overflow-hidden p-5 lg:p-6">
-            <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Dokumentasi Padukuhan</h3>
-            <p className="mt-1 text-sm text-[var(--muted)]">Lihat profil dan keindahan Padukuhan Mertelu dalam video berikut.</p>
-            <div className="mt-4 aspect-video w-full overflow-hidden rounded-xl bg-black">
+            <div className="overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface-soft)]">
+              <div className="p-4 md:p-5">
+                <h3 className="font-[Sora] text-lg font-semibold text-[var(--brand)]">Dokumentasi Padukuhan</h3>
+                <p className="mt-1 text-sm leading-6 text-[var(--muted)]">Profil dan suasana Padukuhan Mertelu dapat dilihat lewat dokumentasi video berikut.</p>
+              </div>
+              <div className="aspect-video w-full overflow-hidden bg-black">
               <iframe
                 width="100%"
                 height="100%"
@@ -91,8 +114,9 @@ export default async function Home() {
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
-                className="w-full h-full"
+                className="h-full w-full"
               />
+              </div>
             </div>
           </div>
         </section>

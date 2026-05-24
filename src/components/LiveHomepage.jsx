@@ -110,9 +110,12 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
     <>
       <Stats stats={stats} />
 
-      <section id="berita" className="section-wrap fade-up mt-8 p-6 md:p-8" style={{ animationDelay: '0.1s' }}>
-        <p className="section-kicker">Informasi</p>
-        <h2 className="section-title mt-2 mb-6 text-2xl md:text-3xl">Berita Terbaru</h2>
+      <section id="berita" className="fade-up mt-8 rounded-lg border border-[var(--line)] bg-white p-5 shadow-[0_16px_44px_rgba(31,43,36,0.07)] md:p-7" style={{ animationDelay: "0.1s" }}>
+        <div className="mb-5 max-w-2xl">
+          <p className="section-kicker">Informasi</p>
+          <h2 className="section-title mt-2 text-2xl md:text-3xl">Berita Terbaru</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Kabar terbaru dari padukuhan, ditulis ringkas agar mudah diikuti warga.</p>
+        </div>
         {errorState.berita ? (
           <EmptyState title="Gagal memuat berita" />
         ) : berita.length === 0 ? (
@@ -122,9 +125,12 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
         )}
       </section>
 
-      <section id="kegiatan" className="section-wrap fade-up mt-8 p-6 md:p-8" style={{ animationDelay: '0.2s' }}>
-        <p className="section-kicker">Aktivitas</p>
-        <h2 className="section-title mt-2 mb-6 text-2xl md:text-3xl">Kegiatan Padukuhan</h2>
+      <section id="kegiatan" className="fade-up mt-8 rounded-lg border border-[var(--line)] bg-white p-5 shadow-[0_16px_44px_rgba(31,43,36,0.07)] md:p-7" style={{ animationDelay: "0.2s" }}>
+        <div className="mb-5 max-w-2xl">
+          <p className="section-kicker">Aktivitas</p>
+          <h2 className="section-title mt-2 text-2xl md:text-3xl">Kegiatan Padukuhan</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Catatan kegiatan warga, program lingkungan, dan agenda sosial yang sedang berjalan.</p>
+        </div>
         {errorState.kegiatan ? (
           <EmptyState title="Gagal memuat kegiatan" />
         ) : kegiatan.length === 0 ? (
@@ -134,9 +140,12 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
         )}
       </section>
 
-      <section id="galeri" className="section-wrap fade-up mt-8 p-6 md:p-8" style={{ animationDelay: '0.3s' }}>
-        <p className="section-kicker">Dokumentasi</p>
-        <h2 className="section-title mt-2 mb-6 text-2xl md:text-3xl">Galeri Kegiatan</h2>
+      <section id="galeri" className="fade-up mt-8 rounded-lg border border-[var(--line)] bg-white p-5 shadow-[0_16px_44px_rgba(31,43,36,0.07)] md:p-7" style={{ animationDelay: "0.3s" }}>
+        <div className="mb-5 max-w-2xl">
+          <p className="section-kicker">Dokumentasi</p>
+          <h2 className="section-title mt-2 text-2xl md:text-3xl">Galeri Kegiatan</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Potongan dokumentasi yang merekam suasana kegiatan di Mertelu.</p>
+        </div>
         {errorState.galeri ? (
           <EmptyState title="Gagal memuat galeri" />
         ) : galeri.length === 0 ? (

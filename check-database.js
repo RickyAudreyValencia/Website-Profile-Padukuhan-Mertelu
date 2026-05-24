@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 // Script untuk memeriksa struktur database Supabase
 const { createClient } = require('@supabase/supabase-js');

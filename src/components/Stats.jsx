@@ -1,78 +1,66 @@
-// Stats component (server) - displays village statistics fetched from Supabase
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { Building2, Home, Store, Users } from "lucide-react";
 
-function AnimatedCounter({ value, suffix }) {
+function AnimatedCounter({ value }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!value || value === 0) {
-      setCount(0);
-      return;
-    }
-    
-    const duration = 2000;
-    const steps = 60;
-    const stepValue = value / steps;
-    let current = 0;
-    let stepCount = 0;
+    const target = Number(value) || 0;
+    const duration = 1200;
+    const start = performance.now();
+    let frameId;
 
-    const timer = setInterval(() => {
-      stepCount++;
-      current = Math.floor(stepValue * stepCount);
-      
-      if (current >= value) {
-        setCount(value);
-        clearInterval(timer);
-      } else {
-        setCount(current);
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(target * eased));
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
       }
-    }, duration / steps);
+    }
 
-    return () => clearInterval(timer);
-  }, [value]); // Re-run whenever value changes
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [value]);
 
-  return (
-    <div className="flex items-end gap-2">
-      <span className="text-3xl font-bold leading-none text-[var(--brand)] md:text-4xl counter-value">
-        {Number(count).toLocaleString('id-ID')}
-      </span>
-      <span className="pb-1 text-xs font-medium text-[var(--muted)]">{suffix}</span>
-    </div>
-  );
+  return <span>{Number(count).toLocaleString("id-ID")}</span>;
 }
 
 export default function Stats({ stats }) {
-  // stats: { penduduk, dusun, umkm, rtrw }
   const safeStats = stats || { penduduk: 0, dusun: 0, umkm: 0, rtrw: 0 };
-  
+
   const items = [
-    { label: 'Penduduk', value: parseInt(safeStats.penduduk) || 0, suffix: 'jiwa' },
-    { label: 'Dusun', value: parseInt(safeStats.dusun) || 0, suffix: 'wilayah' },
-    { label: 'UMKM', value: parseInt(safeStats.umkm) || 0, suffix: 'unit' },
-    { label: 'RT / RW', value: parseInt(safeStats.rtrw) || 0, suffix: 'lingkungan' },
+    { label: "Penduduk", value: parseInt(safeStats.penduduk) || 0, suffix: "jiwa", icon: Users },
+    { label: "Dusun", value: parseInt(safeStats.dusun) || 0, suffix: "wilayah", icon: Home },
+    { label: "UMKM", value: parseInt(safeStats.umkm) || 0, suffix: "unit", icon: Store },
+    { label: "RT / RW", value: parseInt(safeStats.rtrw) || 0, suffix: "lingkungan", icon: Building2 },
   ];
 
   return (
-    <section className="section-wrap fade-up mt-8 p-5 md:p-8">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-        {items.map((it, idx) => (
-          <div
-            key={it.label}
-            className="stat-card overflow-hidden rounded-2xl border border-[var(--line)] p-4 md:p-5"
-            style={{ animationDelay: `${idx * 0.1}s` }}
-          >
-            <div className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--muted)]">{it.label}</div>
-            <div className="mt-2">
-              <AnimatedCounter value={it.value} suffix={it.suffix} />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4 text-xs text-[var(--muted)]">
-        Data ditampilkan otomatis dari basis data Supabase.
+    <section className="fade-up mt-6 rounded-lg border border-[var(--line)] bg-white p-4 shadow-[0_16px_40px_rgba(31,43,36,0.07)] md:mt-8 md:p-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <article key={item.label} className="rounded-lg border border-[var(--line)] bg-[var(--surface-soft)] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[var(--muted)]">{item.label}</p>
+                  <p className="mt-2 flex flex-wrap items-end gap-x-2 gap-y-1 text-3xl font-semibold leading-none text-[var(--brand)]">
+                    <AnimatedCounter value={item.value} />
+                    <span className="pb-1 text-xs font-semibold text-[var(--muted)]">{item.suffix}</span>
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-[var(--brand)]">
+                  <Icon size={20} />
+                </div>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

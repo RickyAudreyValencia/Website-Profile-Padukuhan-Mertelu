@@ -393,16 +393,50 @@ export default function AdminPanel() {
         await deleteOldImage(imageUrl);
       }
 
-      const { error } = await supabaseBrowser.from(activeType).delete().eq("id", selectedItem.id);
-      if (error) throw error;
+      console.log(`[DELETE] Attempting to delete from table: ${activeType}, id: ${selectedItem.id}`);
 
+      // Use API route instead of direct Supabase call (bypass RLS policy)
+      const response = await fetch('/api/delete-item', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          table: activeType,
+          id: selectedItem.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      console.log("[DELETE] API Response:", result);
+
+      if (!response.ok) {
+        console.error("[DELETE] API error:", result);
+        
+        if (result.error?.includes('Service role key not configured')) {
+          showToast(
+            `⚠️ Service role key belum dikonfigurasi.\nTambahkan SUPABASE_SERVICE_ROLE ke .env.local atau fix RLS Policy di Supabase dashboard.`,
+            "error"
+          );
+        } else {
+          showToast(result.error || "Gagal menghapus data", "error");
+        }
+        setBusy(false);
+        return;
+      }
+
+      console.log("[DELETE] Success:", result);
       showToast(`${currentConfig.label} berhasil dihapus`, "success");
       setShowDeleteModal(false);
       setSelectedItem(null);
+      
+      // Delay kecil untuk memastikan database update
+      await new Promise(resolve => setTimeout(resolve, 500));
       await reloadDashboard();
     } catch (error) {
-      console.error("Delete error", error);
-      showToast(error.message || "Gagal menghapus data", "error");
+      console.error("[DELETE] Error caught:", error);
+      showToast(error instanceof Error ? error.message : "Gagal menghapus data", "error");
     } finally {
       setBusy(false);
     }

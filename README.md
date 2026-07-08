@@ -72,6 +72,22 @@ Jika tabel kosong, UI akan menampilkan contoh gambar Unsplash.
 - Anda dapat menggunakan Supabase Dashboard -> Authentication untuk mengaktifkan sign-up dan menambahkan user admin.
 - Jangan simpan `service_role` key di repository publik.
 
+### Deployment (Vercel)
+
+- Jika Anda deploy ke Vercel dan ingin fitur hapus/ubah dari admin panel bekerja menggunakan server-side privileged key, tambahkan `SUPABASE_SERVICE_ROLE` ke **Project Settings → Environment Variables** pada Vercel (set untuk `Production`/`Preview` sesuai kebutuhan) dan redeploy. Gunakan nama variabel `SUPABASE_SERVICE_ROLE` (tanpa `NEXT_PUBLIC_`).
+- Alternatif yang lebih aman: konfigurasi RLS di Supabase agar hanya user tertentu (mis. role `admin` atau via custom claim) dapat menghapus baris. Dengan pendekatan ini Anda tidak perlu menyimpan service role di Vercel — aplikasi akan mengirim token user saat memanggil API dan server akan mencoba melakukan delete memakai token user (jika service role tidak tersedia).
+
+Contoh flow untuk Vercel:
+
+1. Di Vercel Dashboard → Project → Settings → Environment Variables, tambahkan:
+	- `NEXT_PUBLIC_SUPABASE_URL` = your project URL
+	- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = anon/public key
+	- `SUPABASE_SERVICE_ROLE` = service role key (ONLY if you want server to bypass RLS)
+2. Redeploy project (trigger a new deployment).
+3. Setelah deployment selesai, buka halaman admin dan coba fitur hapus.
+
+Catatan: Service role key sangat sensitif — jangan publikasikan. Jika memungkinkan, gunakan RLS-based approach untuk membatasi operasi sensitif hanya untuk admin.
+
 ## File penting
 
 - `src/lib/supabase.js` - wrapper Supabase client

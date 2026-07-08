@@ -395,11 +395,16 @@ export default function AdminPanel() {
         await deleteOldImage(imageUrl);
       }
 
+      // Try to include the current user's access token as fallback (so RLS can apply)
+      const { data: sessionData } = await supabaseBrowser.auth.getSession();
+      const token = sessionData?.session?.access_token || null;
+
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const response = await fetch("/api/delete-item", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           table: activeType,
           id: selectedItem.id,

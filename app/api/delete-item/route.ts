@@ -9,21 +9,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing table or id' }, { status: 400 });
     }
 
-    // Use service role key for backend delete (bypass RLS)
+    // Prefer service role key for backend delete (bypass RLS)
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!serviceRoleKey) {
+    // Allow two modes:
+    // 1) If SUPABASE_SERVICE_ROLE is set, use it (server-side privileged).
+    // 2) Otherwise, if client provided an Authorization bearer token, use the anon key
+    //    and set the user's auth token on the server client so RLS policies apply.
+    const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+
+    let supabase;
+    if (serviceRoleKey) {
+      supabase = createClient(supabaseUrl || '', serviceRoleKey);
+    } else if (authHeader) {
+      const token = authHeader.split(" ")[1];
+      if (!supabaseAnonKey) {
+        return NextResponse.json(
+          { error: 'Supabase anon key not configured' },
+          { status: 500 }
+        );
+      }
+      supabase = createClient(supabaseUrl || '', supabaseAnonKey);
+      if (token) {
+        // set the user's token on the server client so requests run as that user
+        // (do not log the token)
+        supabase.auth.setAuth(token);
+      }
+    } else {
       return NextResponse.json(
         { 
           error: 'Service role key not configured',
-          message: 'Tambahkan SUPABASE_SERVICE_ROLE ke .env.local untuk enable delete'
+          message: 'Tambahkan SUPABASE_SERVICE_ROLE ke .env.local untuk enable delete atau pastikan user sudah login dan RLS mengizinkan penghapusan.'
         },
         { status: 500 }
       );
     }
-
-    const supabase = createClient(supabaseUrl || '', serviceRoleKey);
 
     // Delete dari database
     const { error, data } = await supabase

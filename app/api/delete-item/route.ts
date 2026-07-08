@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
       if (token) {
         // set the user's token on the server client so requests run as that user
         // (do not log the token)
-        supabase.auth.setAuth(token);
+        // cast to any to avoid TypeScript type mismatch for setAuth
+        (supabase.auth as any).setAuth(token);
       }
     } else {
       return NextResponse.json(

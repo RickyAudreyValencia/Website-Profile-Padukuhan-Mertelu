@@ -14,6 +14,8 @@ npm install
 
 - Salin `.env.local.example` menjadi `.env.local`
 - Isi `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` dari dashboard Supabase (Project -> Settings -> API)
+ - Jika Anda ingin menggunakan fitur admin (menghapus/ubah data) dari panel admin, tambahkan juga `SUPABASE_SERVICE_ROLE` ke `.env.local`.
+	 Dapatkan nilai `service_role` dari Supabase Dashboard -> Settings -> API -> Service key. Simpan rahasia ini secara privat dan jangan commit ke git.
 
 3. Jalankan dev server
 

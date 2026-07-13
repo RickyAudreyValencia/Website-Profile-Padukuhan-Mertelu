@@ -5,6 +5,7 @@ import { supabaseBrowser } from "../lib/supabase-browser";
 import Stats from "./Stats";
 import Berita from "./Berita";
 import Kegiatan from "./Kegiatan";
+import ProgramPosyandu from "./ProgramPosyandu";
 import Galeri from "./Galeri";
 import EmptyState from "./EmptyState";
 
@@ -154,6 +155,8 @@ export default function LiveHomepage({ initialBerita, initialKegiatan, initialGa
           <Galeri items={galeri} />
         )}
       </section>
+
+      <ProgramPosyandu />
     </>
   );
 }

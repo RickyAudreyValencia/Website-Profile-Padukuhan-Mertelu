@@ -159,7 +159,7 @@ export default function AdminPanel() {
 
   const villageStats = [
     { key: "penduduk", label: "Jumlah Penduduk", icon: Users },
-    { key: "dusun", label: "Jumlah Dusun", icon: BarChart3 },
+    // { key: "dusun", label: "Jumlah Dusun", icon: BarChart3 },
     { key: "umkm", label: "Jumlah UMKM", icon: Activity },
     { key: "rtrw", label: "Jumlah RT/RW", icon: Settings2 },
   ];
@@ -532,13 +532,15 @@ export default function AdminPanel() {
               <CheckCircle2 size={15} />
               Realtime aktif
             </span>
-            <button
+            {/* <button
               onClick={handleSignOut}
               className="inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--brand)]"
             >
               <LogOut size={16} />
               Keluar
-            </button>
+            </button> */}
+
+
           </div>
         </div>
       </section>

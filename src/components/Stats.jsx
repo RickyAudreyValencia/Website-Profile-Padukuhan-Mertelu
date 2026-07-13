@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2, Home, Store, Users } from "lucide-react";
+import { Building2, Store, Users } from "lucide-react";
 
 function AnimatedCounter({ value }) {
   const [count, setCount] = useState(0);
@@ -34,14 +34,13 @@ export default function Stats({ stats }) {
 
   const items = [
     { label: "Penduduk", value: parseInt(safeStats.penduduk) || 0, suffix: "jiwa", icon: Users },
-    { label: "Dusun", value: parseInt(safeStats.dusun) || 0, suffix: "wilayah", icon: Home },
     { label: "UMKM", value: parseInt(safeStats.umkm) || 0, suffix: "unit", icon: Store },
     { label: "RT / RW", value: parseInt(safeStats.rtrw) || 0, suffix: "lingkungan", icon: Building2 },
   ];
 
   return (
     <section className="fade-up mt-6 rounded-lg border border-[var(--line)] bg-white p-4 shadow-[0_16px_40px_rgba(31,43,36,0.07)] md:mt-8 md:p-6">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => {
           const Icon = item.icon;
           return (

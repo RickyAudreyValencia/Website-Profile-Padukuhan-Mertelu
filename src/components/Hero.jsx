@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, Image as ImageIcon, MapPin, Newspaper } from "lucide-react";
+import { ArrowDown, Image as ImageIcon, MapPin } from "lucide-react";
 
 const HERO_IMAGES = [
   {
@@ -54,7 +54,7 @@ export default function Hero() {
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
               <span className="inline-flex items-center gap-2 rounded-lg border border-white/25 bg-white/10 px-3 py-2 backdrop-blur">
                 <MapPin size={14} />
-                Padukuhan Mertelu
+                GunungKidul, Yogyakarta
               </span>
               <span className="rounded-lg border border-white/20 bg-black/20 px-3 py-2 backdrop-blur">Profil dan kabar warga</span>
             </div>
@@ -75,13 +75,6 @@ export default function Hero() {
                 >
                   <ArrowDown size={17} />
                   Mengenal Mertelu
-                </a>
-                <a
-                  href="#berita"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/18"
-                >
-                  <Newspaper size={17} />
-                  Baca Berita
                 </a>
                 <a
                   href="#galeri"
